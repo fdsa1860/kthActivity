@@ -44,9 +44,9 @@ for(int k=0;k<6;++k)
 			char tmp[50];
 			sprintf(tmp,"person%02d_%s_d%d_uncomp.avi",i,action.c_str(),j);
 			video = videoDir + '/' + action + '/' + tmp;
-			sprintf(tmp,"person%02d_%s_d%d_uncomp_features.gz",i,action.c_str(),j);
+			sprintf(tmp,"person%02d_%s_d%d_uncomp_features",i,action.c_str(),j);
 			output = outputDir + '/' + tmp;
-			cmd = execute + " " + video + " | gzip > " + output;
+			cmd = execute + " " + video + " > " + output;
 			system(cmd.c_str());
 		}
 }
