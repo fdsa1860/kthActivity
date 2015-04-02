@@ -6,10 +6,12 @@ y = traj(:,3:2:end);
 L = (size(traj,2)-1)/2;
 
 fr = traj(:,1);
-lastFr = fr(end);
-Rx = zeros(size(traj,1),lastFr);
-Ry = zeros(size(traj,1),lastFr);
-for i=1:size(traj,1)
+fr = fr - fr(1) + L;
+sizeOfRc = fr(end) - fr(1) + L;
+numOfTraj = size(traj,1);
+Rx = zeros(numOfTraj,sizeOfRc);
+Ry = zeros(numOfTraj,sizeOfRc);
+for i=1:numOfTraj
     Rx(i,fr(i)-L+1:fr(i)) = x(i,:);
     Ry(i,fr(i)-L+1:fr(i)) = y(i,:);
 end

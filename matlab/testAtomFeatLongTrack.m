@@ -2,7 +2,7 @@
 % Xikang Zhang, 01/31/2014
 
 % function testAtomFeatLongTrack
-clear;clc;close all;
+clear;clc;close all;warning off;
 
 params.num_km_init_word = 3;
 params.MaxInteration = 3;
@@ -56,12 +56,14 @@ a_test = al(:,ismember(pl,testingSet));
 s_test = sl(:,ismember(pl,testingSet));
 p_test = pl(:,ismember(pl,testingSet));
 
-
+profile on;
 % get hankelet features
 aFeat = [];
 asl = [];
 aal = [];
 apl = [];
+aTraj = [];
+aWeight = [];
 usl = unique(sl);
 for i=1:length(usl)
     ual = unique(al(sl==usl(i)));
@@ -69,17 +71,23 @@ for i=1:length(usl)
         upl = unique(pl(sl==usl(i) & al==ual(j)));
         for k=1:length(upl)            
             X_tmp = trajs(sl==usl(i) & al==ual(j) & pl==upl(k),:);
-            [aVec,mainPath,mainWeight] = findAtomVector(X_tmp);
+            [aVec,mainPath,mainWeight] = findAtomHist(X_tmp);
+            aTraj = [aTraj, mainPath];
+            aWeight = [aWeight, mainWeight];
             aFeat = [aFeat, aVec];
             asl = [asl, usl(i)];
             aal = [aal, ual(j)];
-            apl = [apl, upl(k)];            
+            apl = [apl, upl(k)];
         end
         fprintf('action %d/%d processed.\n',j,length(ual));
-    end    
+    end
 end
-%     save hFeat300_action01_06_person01_26_scene010304_20131118t hFeat hsl hal hpl;
-load ../expData/aFeat_action01_06_person01_26_scene010304_20140210t;
+profile viewer
+% %     save hFeat300_action01_06_person01_26_scene010304_20131118t hFeat hsl hal hpl;
+% load ../expData/aFeat_action01_06_person01_26_scene010304_20140210t;
+load aFeat300_action01_06_person01_26_scene010304_20140217t_temp;
+[coeff,score] = princomp(aFeat');
+aFeat = score(:,1:100)';
 
 X2_train = aFeat(:,ismember(apl,trainingSet));
 X2_validate = aFeat(:,ismember(apl,validationSet));

@@ -3,7 +3,7 @@
 
 function [trajs,al,pl,sl] = readTrajectory
 
-trajPath = '/home/xikang/research/data/KTH/trackletsData';
+trajPath = '/home/xikang/research/data/KTH/trackletsData64';
 
 trajs = [];
 al = [];
@@ -28,7 +28,7 @@ for k=1:6
     end
     
     for i=1:25
-        for j=1:4    
+        for j=1:1    
             fileName = sprintf('person%02d_%s_d%d_uncomp_features',i,action,j);
             traj = load(fullfile(trajPath,fileName));
             trajs = [trajs; traj];

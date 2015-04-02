@@ -1,16 +1,17 @@
-% test hankel and kmeans
-% Xikang Zhang, 11/12/2013
+% test hankel and kmeans with JLD metric
+% Xikang Zhang, 03/31/2015
 
 % function testHankelFeat
 clear;clc;close all;
 
-params.num_km_init_word = 3;
-params.MaxInteration = 3;
+params.num_km_init_word = 1;
+params.MaxInteration = 100;
 params.labelBatchSize = 10000;
 params.actualFilterThreshold = -1;
 params.find_labels_mode = 'DF';
-ncenter = 300;
-% ncenter = 100;
+params.nc = 8;
+params.num_clusterNum = 300;
+% params.num_clusterNum = 100;
 % svm regularization
 C = 10;
 G = 0.015;
@@ -26,15 +27,15 @@ load(fullfile('../expData',file));
 % al = al(sl~=2);
 % pl = pl(sl~=2);
 % sl = sl(sl~=2);
-% 
+
 % % % for order=2:6
 % % 
 % % % trajs2 = denoise(trajs,order);
 % % % trajs2 = trajs;
 % % % save(sprintf('seq_action01_06_person01_26_scene01_01_20131112d%d',order),'trajs2');
 % % % fprintf('traj2 of order %d saved.\n',order);
-% % 
-% % % X = ofs(:,2:end)';
+
+% X = ofs(:,2:end)';
 T = trajs(:,2:end)';
 % % % X = trajs2(:,2:end)';clear trajs2;
 al = reshape(al,1,[]);
@@ -80,55 +81,52 @@ a_test = al(:,ismember(pl,testingSet));
 s_test = sl(:,ismember(pl,testingSet));
 p_test = pl(:,ismember(pl,testingSet));
 
+
 % % kmeans to learn cluster centers
 % rng(0); % sample
 % rndInd = randi(size(X_train,2),1,params.labelBatchSize);
 % trainCenter = cell(1, params.num_km_init_word);
 % for i = 1 : params.num_km_init_word
 %     
-%     [~, trainCenter{i} trainClusterMu trainClusterSigma trainClusterNum] = litekmeans_subspace(X_train(:,rndInd), ncenter,params);
-%     
-%     params.trainClusterInfo{i}.mu = trainClusterMu;
-%     params.trainClusterInfo{i}.sigma = trainClusterSigma;
+%     [~, trainCenter{i}, trainClusterNum] = litekmeans_JLD(X_train(:,rndInd), params.num_clusterNum,params);
 %     params.trainClusterInfo{i}.num = trainClusterNum;
 %     
 %     params.trainClusterNum{i} = size(trainCenter{i}, 2);
 %     
 % end
-% 
+
 % % labeling
 % params = cal_cluster_info(params);
 
 % save kmeansWords300_action01_06_person01_26_scene01_04_20131118t params trainCenter;
 % load ../expData/kmeansWords300_action01_06_person01_26_scene010304_20140220t_nomirror;
-load ../expData/kmeansWords300_train10000_action01_06_person01_26_scene01_04_20150401v
+load ../expData/kmeansJLD_w300_action01_06_person01_26_scene01_04_20150402v;
 
-% % get hankelet features
-% hFeat = [];
-% hsl = [];
-% hal = [];
-% hpl = [];
-% usl = unique(sl);
-% for i=1:length(usl)
-%     ual = unique(al(sl==usl(i)));
-%     for j=1:length(ual)
-%         upl = unique(pl(sl==usl(i) & al==ual(j)));
-%         for k=1:length(upl)            
-%             X_tmp = X(:,sl==usl(i) & al==ual(j) & pl==upl(k));
-%             [label1, dis, class_hist] = find_weight_labels_df_HHp_newProtocal({trainCenter{3}},X_tmp, params);
-% %           [label1, dis, class_hist] = find_weight_labels_df_HHp_newProtocal2({trainCenter{3}},X_tmp, params);
-% %             class_hist2 = getVotedHist(label1,dis,params);
-%             hFeat = [hFeat, class_hist'];
-%             hsl = [hsl, usl(i)];
-%             hal = [hal, ual(j)];
-%             hpl = [hpl, upl(k)];            
-%         end
-%         fprintf('action %d/%d processed.\n',j,length(ual));
-%     end    
-% end
+% get hankelet features
+hFeat = [];
+hsl = [];
+hal = [];
+hpl = [];
+usl = unique(sl);
+for i=1:length(usl)
+    ual = unique(al(sl==usl(i)));
+    for j=1:length(ual)
+        upl = unique(pl(sl==usl(i) & al==ual(j)));
+        for k=1:length(upl)            
+            X_tmp = X(:,sl==usl(i) & al==ual(j) & pl==upl(k));
+            [label1, dis, class_hist] = find_weight_labels_JLD(trainCenter{1}, X_tmp, params);
+%             class_hist2 = getVotedHist(label1,dis,params);
+            hFeat = [hFeat, class_hist'];
+            hsl = [hsl, usl(i)];
+            hal = [hal, ual(j)];
+            hpl = [hpl, upl(k)];            
+        end
+        fprintf('action %d/%d processed.\n',j,length(ual));
+    end    
+end
 %     save hFeat300_action01_06_person01_26_scene01_04_20131118t hFeat hsl hal hpl;
 % load ../expData/hFeat300_action01_06_person01_26_scene01_04_20131210t;
-load ../expData/hFeat300_train10000_action01_06_person01_26_scene01_04_20150401v
+load ../expData/hFeatJLD_w300_train10000_action01_06_person01_26_scene01_04_20150401v;
 
 X2_train = hFeat(:,ismember(hpl,trainingSet));
 X2_validate = hFeat(:,ismember(hpl,validationSet));
@@ -263,11 +261,11 @@ C = 10.^Cind;
 % C = 1e2;
 % gi2 = [6 7 6 7 7 7];
 % ci2 = [13 12 12 12 12 12];
-gi = 7;
-ci = 12;
+% gi = 7;
+% ci = 12;
 accuracyMat = zeros(length(G),length(C),6);
-% for gi = 1:length(G)
-%     for ci = 1:length(C)
+for gi = 1:length(G)
+    for ci = 1:length(C)
 
 addpath('/home/xikang/research/code/kthActivity/3rdParty/libsvm-2.9-dense_chi_square_mat');
 ly = unique(y2_train);
@@ -295,11 +293,11 @@ rmpath('/home/xikang/research/code/kthActivity/3rdParty/libsvm-2.9-dense_chi_squ
 
 % accuracy
 fprintf('\naccuracy is %f\n',mean(accuracy));
-% accuracyMat(gi,ci) = mean(accuracy);
+accuracyMat(gi,ci) = mean(accuracy);
 % accuracyMat(gi,ci,:) = accuracy;
 
-%     end
-% end
+    end
+end
 % save('accuracy_action01_06_person01_26_scene01_01_20131118','accuracy','y2_test','predict_label');
 
 % label_gt = [label_gt; y2_test];

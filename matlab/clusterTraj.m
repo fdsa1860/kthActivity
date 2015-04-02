@@ -4,12 +4,13 @@ if nargin < 2
     verbose = false;
 end
 
-numOfCluster = 5;
+numOfClusterS = 5;
 thr = 0.05;
+
+traj = sortrows(traj,1); % sort traj according to frame number
 
 tDistThr = floor(size(traj,2)/2);
 fr = traj(:,1);
-fr = sort(fr);
 idxT = ones(length(fr),1);
 idxS = zeros(length(fr),1);
 for i=2:length(fr)
@@ -23,12 +24,17 @@ end
 uidxT = unique(idxT);
 counter = 1;
 for i=1:length(uidxT)
+    if nnz(idxT == uidxT(i)) == 1
+        idxS(counter) = 1;
+        counter = counter + 1;
+        continue;
+    end
     z = linkage(traj(idxT == uidxT(i),2:end),'centroid');
-    idxS(counter:counter+size(z,1)) = cluster(z,'maxclust',numOfCluster);
+    idxS(counter:counter+size(z,1)) = cluster(z,'maxclust',numOfClusterS);
     counter = counter + size(z,1);
 end
 
-idx = (idxT-1) * numOfCluster + idxS;
+idx = (idxT-1) * numOfClusterS + idxS;
 
 % % N-cut
 % addpath('/home/xikang/research/code/kthActivity/3rdParty/Ncut_9');
@@ -53,10 +59,17 @@ if verbose
     hold off;
 end
 
-% filter out the minorities
-for i=1:numOfCluster
-    if nnz(idx==i)/length(idx) < thr
-        idx(idx==i) = 0;
+% filter
+uidx = unique(idx);
+for i=1:length(uidx)
+    % filter out the outliers
+    if nnz(idx==uidx(i))/length(idx) < thr
+        idx(idx==uidx(i)) = 0;
+    end
+    % filter out temporal broken trajectories
+    temporalIdx = diff(traj(idx==uidx(i),1));
+    if any(temporalIdx > tDistThr)
+        idx(idx==uidx(i)) = 0;
     end
 end
 

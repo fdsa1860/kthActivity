@@ -1,16 +1,20 @@
 % display trajectories
 
+addpath(genpath('../3rdParty/mmread'));
+
 % set parameters
 actionStr = 'boxing';
 personNum = 1;
 sceneNum = 1;
 
 % load video
-dataPath = '/home/xikang/research/data/KTH/activityData';
-videoName = fullfile(dataPath,actionStr,sprintf('person%02d_%s_d%d_uncomp.avi',personNum,actionStr, sceneNum));
+% dataPath = '/home/xikang/research/data/KTH/activityData';
+dataPath = '/home/xikang/research/code/kthActivity/3rdParty/dense_trajectory_release_v1.2/test_sequences'
+videoName = fullfile(dataPath,sprintf('person%02d_%s_d%d_uncomp.avi',personNum,actionStr, sceneNum));
 vid = mmread(videoName);
 
-trajPath = '/home/xikang/research/data/KTH/trackletsData';
+% trajPath = '/home/xikang/research/data/KTH/trackletsData';
+trajPath = '/home/xikang/research/code/kthActivity/3rdParty/dense_trajectory_release_v1.2',
 file = fullfile(trajPath,sprintf('person%02d_%s_d%d_uncomp_features2',personNum,actionStr, sceneNum));
 traj = load(file);
 
