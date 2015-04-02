@@ -15,7 +15,7 @@ ncenter = 300;
 C = 10;
 G = 0.015;
 
-addpath(genpath('../3rdParty/hankelet-master/hankelet-master'));
+addpath(genpath('../3rdParty/hankelet-master'));
 addpath(genpath(getProjectBaseFolder));
 
 % Load data

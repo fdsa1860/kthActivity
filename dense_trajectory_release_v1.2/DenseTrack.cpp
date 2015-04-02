@@ -7,7 +7,7 @@
 
 using namespace cv;
 
-int show_track = 0; // set show_track = 1, if you want to visualize the trajectories
+int show_track = 1; // set show_track = 1, if you want to visualize the trajectories
 
 int main(int argc, char** argv)
 {
@@ -23,17 +23,7 @@ int main(int argc, char** argv)
 
 	int frame_num = 0;
 	TrackInfo trackInfo;
-	DescInfo hogInfo, hofInfo, mbhInfo;
-
 	InitTrackInfo(&trackInfo, track_length, init_gap);
-
-	SeqInfo seqInfo;
-	InitSeqInfo(&seqInfo, video);
-
-	if(flag)
-		seqInfo.length = end_frame - start_frame + 1;
-
-//	fprintf(stderr, "video size, length: %d, width: %d, height: %d\n", seqInfo.length, seqInfo.width, seqInfo.height);
 
 	if(show_track == 1)
 		namedWindow("DenseTrack", 0);
@@ -50,7 +40,7 @@ int main(int argc, char** argv)
 	int init_counter = 0; // indicate when to detect new feature points
 	while(true) {
 		Mat frame;
-		int i, j, c;
+		int i, c;
 
 		// get a new frame
 		capture >> frame;
@@ -94,7 +84,7 @@ int main(int argc, char** argv)
 				// save the feature points
 				std::list<Track>& tracks = xyScaleTracks[iScale];
 				for(i = 0; i < points.size(); i++)
-					tracks.push_back(Track(points[i], trackInfo, hogInfo, hofInfo, mbhInfo));
+					tracks.push_back(Track(points[i], trackInfo));
 			}
 
 			// compute polynomial expansion
@@ -150,24 +140,19 @@ int main(int argc, char** argv)
 					std::vector<Point2f> trajectory2(trackInfo.length+1);
 					for(int i = 0; i <= trackInfo.length; ++i)
 						trajectory[i] = iTrack->point[i]*fscales[iScale];
-						
-					trajectory2 = trajectory;
+					
+//					trajectory2 = trajectory;
 				
 					float mean_x(0), mean_y(0), var_x(0), var_y(0), length(0);
 					if(IsValid(trajectory, mean_x, mean_y, var_x, var_y, length)) {
-//						printf("%d\t%f\t%f\t%f\t%f\t%f\t%f\t", frame_num, mean_x, mean_y, var_x, var_y, length, fscales[iScale]);
-						printf("%d\t",frame_num);
-
-//						// for spatio-temporal pyramid
-//						printf("%f\t", std::min<float>(std::max<float>(mean_x/float(seqInfo.width), 0), 0.999));
-//						printf("%f\t", std::min<float>(std::max<float>(mean_y/float(seqInfo.height), 0), 0.999));
-//						printf("%f\t", std::min<float>(std::max<float>((frame_num - trackInfo.length/2.0 - start_frame)/float(seqInfo.length), 0), 0.999));
+						// printf("%d\t%f\t%f\t%f\t%f\t%f\t%f\t", frame_num, mean_x, mean_y, var_x, var_y, length, fscales[iScale]);
+						printf("%d\t", frame_num);
 					
 //						// output the trajectory
-//						for (int i = 0; i < trackInfo.length; ++i)
-//							printf("%f\t%f\t", trajectory[i].x,trajectory[i].y);
 						for (int i = 0; i < trackInfo.length; ++i)
-							printf("%f\t%f\t", trajectory2[i].x,trajectory2[i].y);
+							printf("%f\t%f\t", trajectory[i].x,trajectory[i].y);
+//						for (int i = 0; i < trackInfo.length; ++i)
+//							printf("%f\t%f\t", trajectory2[i].x,trajectory2[i].y);
 
 						printf("\n");
 					}
@@ -189,7 +174,7 @@ int main(int argc, char** argv)
 			DenseSample(grey_pyr[iScale], points, quality, min_distance);
 			// save the new feature points
 			for(i = 0; i < points.size(); i++)
-				tracks.push_back(Track(points[i], trackInfo, hogInfo, hofInfo, mbhInfo));
+				tracks.push_back(Track(points[i], trackInfo));
 		}
 
 		init_counter = 0;
@@ -205,6 +190,7 @@ int main(int argc, char** argv)
 			imshow( "DenseTrack", image);
 			c = cvWaitKey(3);
 			if((char)c == 27) break;
+			if(frame_num == end_frame) break;
 		}
 	}
 

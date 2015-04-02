@@ -84,7 +84,6 @@ void usage()
 	fprintf(stderr, "  -t [temporal cells]       The number of cells in the nt axis (default: nt=3 cells)\n");
 	fprintf(stderr, "  -A [scale number]         The number of maximal spatial scales (default: 8 scales)\n");
 	fprintf(stderr, "  -I [initial gap]          The gap for re-sampling feature points (default: 1 frame)\n");
-	fprintf(stderr, "  -M [mininum variance]     The minimum variance that trajectory should satisfy (default: sqrt(3) pixels)\n");
 }
 
 bool arg_parse(int argc, char** argv)
@@ -92,7 +91,7 @@ bool arg_parse(int argc, char** argv)
 	int c;
 	bool flag = false;
 	char* executable = basename(argv[0]);
-	while((c = getopt (argc, argv, "hS:E:L:W:N:s:t:A:I:M:")) != -1)
+	while((c = getopt (argc, argv, "hS:E:L:W:N:s:t:A:I:")) != -1)
 	switch(c) {
 		case 'S':
 		start_frame = atoi(optarg);
@@ -122,10 +121,7 @@ bool arg_parse(int argc, char** argv)
 		break;
 		case 'I':
 		init_gap = atoi(optarg);
-		break;
-		case 'M':
-		min_var = atoi(optarg);
-		break;
+		break;	
 
 		case 'h':
 		usage();
