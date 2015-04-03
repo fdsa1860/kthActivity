@@ -1,4 +1,4 @@
-function [label, center, nEachCluster]  = litekmeans_JLD(T,k,params)
+function [label, HH_center, nEachCluster]  = litekmeans_JLD(T,k,params)
 % kmeansJLD:
 % perform kmeans clustering on covariance matrices with JLD metric
 % Input:
@@ -14,9 +14,9 @@ nc = params.nc;
 HH = cell(1,N);
 for i = 1:N
     H1 = hankel_mo(reshape(T(:,i),2,[]),[(d/2-nc+1)*2, nc]);
-    H1_p = H1 / (norm(H1*H1','fro')^0.5);
-    HH1 = H1_p' * H1_p;
-    HH{i} = HH1 + 1e-6 * eye(nc);
+    H1_p = H1 / (norm(H1'*H1,'fro')^0.5);
+    HH1 = H1_p * H1_p';
+    HH{i} = HH1 + 1e-6 * eye((d/2-nc+1)*2);
 %       HH{i} = HH1;
 end
 
@@ -53,7 +53,7 @@ end
 
 nEachCluster = histc(label, 1 : k);
 [nEachCluster, IX] = sort(nEachCluster, 'descend');
-center = T(:, IX);
+HH_center = HH_center(IX);
 
 end
 
