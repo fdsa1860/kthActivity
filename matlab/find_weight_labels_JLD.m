@@ -40,11 +40,12 @@ end
 
 k = length(HH_center);
 D = zeros(k,N);
-for i=1:N
-    for j=1:k
-        HH1 = HH{i};
-        HH2 = HH_center{j};
-        D(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) - 0.5*log(det(HH2));
+for i=1:k
+    for j=1:N
+        HH1 = HH_center{i};
+        HH2 = HH{j};
+%         D(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) - 0.5*log(det(HH2));
+        D(i,j) = JLD(HH1,HH2);
     end
 end
 [~,label] = min(D);

@@ -38,9 +38,10 @@ p_test = pl(:,ismember(pl,testingSet));
 
 %% load centers
 % load kmeansWords300_action01_06_person01_26_scene01_04_histDist_20150402f;
-load kmeansJLD_w300_action01_06_person01_26_scene01_04_20150403f;
+load ../expData/kmeansBinlong_w300_action01_06_person01_26_scene01_04_20150403f;
+% load kmeansJLD_w300_action01_06_person01_26_scene01_04_20150403f;
 
-label = params.label;
+label = sortLabel(params.label);
 ind = params.rndInd;
 
 centers = trainCenter{1};
@@ -52,8 +53,8 @@ n = size(trainData,2);
 d = size(trainData,1);
 k = length(centers);
 
-% opt.metric = 'binlong';
-opt.metric = 'JLD';
+opt.metric = 'binlong';
+% opt.metric = 'JLD';
 nc = 8;
 nr = (d/2-nc+1)*2;
 HH_train = cell(1,n);
@@ -72,57 +73,92 @@ for i = 1:n
     end
 end
 
-HH_centers = cell(1, k);
+if strcmp(opt.metric,'JLD')
+    HH_centers = trainCenter{1};
+elseif strcmp(opt.metric,'binlong')
+    HH_centers = cell(1, k);
+    for i = 1:k
+        H1 = hankel_mo(reshape(centers(:,i),2,[]),[nr, nc]);
+        H1_p = H1 / (norm(H1*H1','fro')^0.5);
+        HH1 = H1_p * H1_p';
+        if strcmp(opt.metric,'JLD')
+            HH_centers{i} = HH1 + 1e-6 * eye(nr);
+            %         HH{i} = HH1;
+        elseif strcmp(opt.metric,'binlong')
+            HH_centers{i} = HH1;
+        end
+    end
+end
+
+%% Compute distances
+% tic
+% D = zeros(n);
+% for i = 1:n
+%     for j = 1:n
+%         if strcmp(opt.metric,'JLD')
+%             HH1 = HH_train{i};
+%             HH2 = HH_train{j};
+%             D(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) -0.5*log(det(HH2));
+%         elseif strcmp(opt.metric,'binlong')
+%             D(j,i) = 2 - norm(HH_train{i}+HH_train{j},'fro');
+%         end
+%     end
+% end
+% toc
+
+% tic
+% D2 = zeros(k,n);
+% for i = 1:n
+%     for j = 1:k
+%         if strcmp(opt.metric,'JLD')
+%             HH1 = HH_train{i};
+%             HH2 = HH_centers{j};
+%             D2(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) -0.5*log(det(HH2));
+%         elseif strcmp(opt.metric,'binlong')
+%             D2(j,i) = 2 - norm(HH_train{i}+HH_centers{j},'fro');
+%         end
+%     end
+% end
+% toc
+
+% tic
+% D3 = zeros(k,k);
+% for i = 1:k
+%     for j = i:k
+%         if strcmp(opt.metric,'JLD')
+%             HH1 = HH_centers{i};
+%             HH2 = HH_centers{j};
+%             D3(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) -0.5*log(det(HH2));
+%         elseif strcmp(opt.metric,'binlong')
+%             D3(j,i) = 2 - norm(HH_centers{i}+HH_centers{j},'fro');
+%         end
+%     end
+% end
+% D3 = D3 + D3';
+% toc
+
+label1 = label;
+HH_centers1 = HH_centers;
+load ../expData/kmeansJLD_w300_action01_06_person01_26_scene01_04_20150403f;
+HH_centers2 = trainCenter{1};
+% for i = 1:length(HH_centers2)
+%     HH_centers2{i} = HH_centers2{i} / norm(HH_centers2{i},'fro');
+% end
+label2 = sortLabel(params.label);
+tic;D4 = HHdist(HH_centers1, HH_centers2, 'binlong');toc
+tic;D5 = HHdist(HH_centers1, HH_centers2, 'JLD');toc
+tic
+D6 = zeros(k);
 for i = 1:k
-    H1 = hankel_mo(reshape(centers(:,i),2,[]),[nr, nc]);
-    H1_p = H1 / (norm(H1*H1','fro')^0.5);
-    HH1 = H1_p * H1_p';
-%     H1_p = H1 / norm(H1*H1','fro');
-%     HH1 = H1_p * H1_p';
-%     HH1 = HH1 / norm(HH1, 'fro');
-    if strcmp(opt.metric,'JLD')
-        HH_centers{i} = HH1 + 1e-6 * eye(nr);
-%         HH{i} = HH1;
-    elseif strcmp(opt.metric,'binlong')
-        HH_centers{i} = HH1;
-    end
-end
-
-tic
-D = zeros(n);
-for i = 1:n
-    for j = 1:n
-        if strcmp(opt.metric,'JLD')
-            HH1 = HH_train{i};
-            HH2 = HH_train{j};
-            D(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) -0.5*log(det(HH2));
-        elseif strcmp(opt.metric,'binlong')
-            D(j,i) = 2 - norm(HH_train{i}+HH_train{j},'fro');
-        end
-    end
-end
-toc
-
-tic
-D2 = zeros(k,n);
-for i = 1:n
     for j = 1:k
-        if strcmp(opt.metric,'JLD')
-            HH1 = HH_train{i};
-            HH2 = HH_centers{j};
-            D2(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) -0.5*log(det(HH2));
-        elseif strcmp(opt.metric,'binlong')
-            D2(j,i) = 2 - norm(HH_train{i}+HH_centers{j},'fro');
-        end
+        D6(i,j) = nnz(label1==i & label2==j) / nnz(label1==i | label2==j);
     end
 end
 toc
-
-label = sortLabel(label);
 
 %% plot
 c1 = 1;
-c2 = 2;
+c2 = 5;
 ind1 = find(label==c1);
 ind2 = find(label==c2);
 scale = 0:1:100;
@@ -162,14 +198,25 @@ ylabel('histogram');
 legend('all_1 to center_1','all_2 to center_2','all_1 to center_2','all_2 to center_1');
 
 %% plot all inClusters
-scale = 0:0.1:10;
-M = D/0.1;
+scale = 0:0.01:1;
+M = D2;
+h = zeros(k,length(scale));
+for i = 1:k
+    ind = find(label~=i);
+    A = M(i,ind);
+    h(i,:) = hist(A(:),scale);
+end
 figure;
 hold on;
-for i = 1:k
-    ind = find(label==i);
-    A = M(ind,ind);
-    h = hist(A(:),scale);
-    plot(scale,h,'b');
-end
+plot(scale,h);
 hold off;
+xlabel('distance');
+ylabel('histogram');
+
+%% distances between means
+imagesc(log(D6));colorbar;
+set(gca,'xtick',[1:30:300 300],'xTickLabel',{'1 (231)','31 (95)','61 (76)','91 (58)','121 (3)','151 (2)','181 (1)','211 (1)','241 (1)','271 (1)','300 (1)'});
+set(gca,'ytick',[1:30:300 300],'yTickLabel',{'1 (421)','31 (88)','61 (45)','91 (32)','121 (22)','151 (13)','181 (10)','211 (7)','241 (5)','271 (3)','300 (1)'});
+xlabel('JBLD cluster means: index (cluster size)');
+ylabel('BM cluster means: index (cluster size)');
+
