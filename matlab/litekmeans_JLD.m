@@ -30,13 +30,17 @@ iter_max = params.MaxInteration;
 iter = 0;
 while iter<iter_max && any(label~=label_old)
     
-    for i=1:N
-        for j=1:k
-            HH1 = HH{i};
-            HH2 = HH_center{j};
-            D(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) - 0.5*log(det(HH2));
+%     tic;
+    for i=1:k
+        parfor j=1:N
+            HH1 = HH_center{i};
+            HH2 = HH{j};
+            D(i,j) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) - 0.5*log(det(HH2));
+%             D(j,i) = JLD(HH1,HH2);
         end
     end
+%     toc
+%     tic;D2 = JLDbatch(HH_center,HH);toc
     label_old = label;
     [~,label] = min(D);
     for j=1:k

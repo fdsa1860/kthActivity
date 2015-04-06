@@ -19,8 +19,8 @@ HH = cell(1,N);
 for i = 1:N
     H1 = hankel_mo(reshape(T(:,i),2,[]),[(d/2-nc+1)*2, nc]);
     H1_p = H1 / (norm(H1*H1','fro')^0.5);
-    HH1 = H1_p' * H1_p;
-    HH{i} = HH1 + 1e-6 * eye(nc);
+    HH1 = H1_p * H1_p';
+    HH{i} = HH1 + 1e-6 * eye((d/2-nc+1)*2);
 %       HH{i} = HH1;
 end
 
@@ -37,11 +37,12 @@ end
 
 k = length(HH_center);
 D = zeros(k,N);
-for i=1:N
-    for j=1:k
-        HH1 = HH{i};
-        HH2 = HH_center{j};
-        D(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) - 0.5*log(det(HH2));
+for i=1:k
+    for j=1:N
+        HH1 = HH_center{i};
+        HH2 = HH{j};
+%         D(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) - 0.5*log(det(HH2));
+        D(i,j) = JLD(HH1,HH2);
     end
 end
 [~,label] = min(D);
