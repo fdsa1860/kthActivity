@@ -14,10 +14,13 @@ nc = params.nc;
 HH = cell(1,N);
 for i = 1:N
     H1 = hankel_mo(reshape(T(:,i),2,[]),[(d/2-nc+1)*2, nc]);
-    H1_p = H1 / (norm(H1'*H1,'fro')^0.5);
-    HH1 = H1_p * H1_p';
+    if strcmp(params.metric,'HHt');
+        HH1 = H1 * H1';
+    elseif strcmp(params.metric,'HtH')
+        HH1 = H1'*H1;
+    end
+    HH1 = HH1 / norm(HH1,'fro');
     HH{i} = HH1 + 1e-6 * eye((d/2-nc+1)*2);
-%       HH{i} = HH1;
 end
 
 D = zeros(k,N);
