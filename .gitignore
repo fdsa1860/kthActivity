@@ -5,5 +5,9 @@ expData/
 .build_release/
 .build_debug/
 trackletsData/
-3rdParty/
+3rdParty/Ncut_9
+3rdParty/dense_trajectory_release_v1.2
+3rdParty/hankelet-master
+3rdParty/libsvm-2.9-dense_chi_square_mat
+3rdParty/libsvm-3.18
 test_sequences/
