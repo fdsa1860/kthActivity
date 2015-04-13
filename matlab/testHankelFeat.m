@@ -4,8 +4,8 @@
 % function testHankelFeat
 clear;clc;close all;
 
-params.num_km_init_word = 3;
-params.MaxInteration = 3;
+params.num_km_init_word = 1;
+params.MaxInteration = 100;
 params.labelBatchSize = 10000;
 params.actualFilterThreshold = -1;
 params.find_labels_mode = 'DF';
@@ -19,7 +19,7 @@ addpath(genpath('../3rdParty/hankelet-master'));
 addpath(genpath(getProjectBaseFolder));
 
 % Load data
-file = 'seq_action01_06_person01_26_scene01_04_20131118t.mat';
+file = 'seq_action01_06_person01_26_scene01_04_20131118f.mat';
 load(fullfile('../expData',file));
 
 % trajs = trajs(sl~=2,:);
@@ -35,17 +35,20 @@ load(fullfile('../expData',file));
 % % % fprintf('traj2 of order %d saved.\n',order);
 % % 
 % % % X = ofs(:,2:end)';
-T = trajs(:,2:end)';
+% T = trajs(:,2:end)';
+V = trajs(:,2:end)';
 % % % X = trajs2(:,2:end)';clear trajs2;
 al = reshape(al,1,[]);
 pl = reshape(pl,1,[]);
 sl = reshape(sl,1,[]);
 
 % average filtering and get velocity
-h = [1; 1; 1]/3;
-Tx = T(1:2:end,:); Tx = conv2(Tx, h, 'valid'); Vx = diff(Tx);
-Ty = T(2:2:end,:); Ty = conv2(Ty, h, 'valid'); Vy = diff(Ty);
-V = zeros(size(Vx,1)*2,size(Vx,2)); V(1:2:end,:) = Vx; V(2:2:end,:) = Vy;
+% h = [1; 1; 1]/3;
+% Tx = T(1:2:end,:); Tx = conv2(Tx, h, 'valid'); Vx = diff(Tx);
+% Ty = T(2:2:end,:); Ty = conv2(Ty, h, 'valid'); Vy = diff(Ty);
+% V = zeros(size(Vx,1)*2,size(Vx,2)); V(1:2:end,:) = Vx; V(2:2:end,:) = Vy;
+Vx = V(1:2:end,:);
+Vy = V(2:2:end,:);
 Vnorm = sum(sqrt(Vx.^2+Vy.^2));
 X = bsxfun(@rdivide,V,Vnorm);
 
@@ -80,24 +83,26 @@ a_test = al(:,ismember(pl,testingSet));
 s_test = sl(:,ismember(pl,testingSet));
 p_test = pl(:,ismember(pl,testingSet));
 
-% % kmeans to learn cluster centers
-% rng(0); % sample
-% rndInd = randi(size(X_train,2),1,params.labelBatchSize);
-% trainCenter = cell(1, params.num_km_init_word);
-% for i = 1 : params.num_km_init_word
-%     
-%     [~, trainCenter{i} trainClusterMu trainClusterSigma trainClusterNum] = litekmeans_subspace(X_train(:,rndInd), ncenter,params);
-%     
-%     params.trainClusterInfo{i}.mu = trainClusterMu;
-%     params.trainClusterInfo{i}.sigma = trainClusterSigma;
-%     params.trainClusterInfo{i}.num = trainClusterNum;
-%     
-%     params.trainClusterNum{i} = size(trainCenter{i}, 2);
-%     
-% end
-% 
-% % labeling
-% params = cal_cluster_info(params);
+% kmeans to learn cluster centers
+rng(0); % sample
+rndInd = randi(size(X_train,2),1,params.labelBatchSize);
+trainCenter = cell(1, params.num_km_init_word);
+for i = 1 : params.num_km_init_word
+    
+    [label, trainCenter{i} trainClusterMu trainClusterSigma trainClusterNum] = litekmeans_subspace(X_train(:,rndInd), ncenter,params);
+    
+    params.trainClusterInfo{i}.mu = trainClusterMu;
+    params.trainClusterInfo{i}.sigma = trainClusterSigma;
+    params.trainClusterInfo{i}.num = trainClusterNum;
+    params.label = sortLabel(label);
+    params.rndInd = rndInd;
+    
+    params.trainClusterNum{i} = size(trainCenter{i}, 2);
+    
+end
+
+% labeling
+params = cal_cluster_info(params);
 
 % save kmeansWords300_action01_06_person01_26_scene01_04_20131118t params trainCenter;
 % load ../expData/kmeansWords300_action01_06_person01_26_scene010304_20140220t_nomirror;

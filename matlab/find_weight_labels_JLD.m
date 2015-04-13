@@ -21,7 +21,6 @@ for i = 1:N
     HH1 = H1 * H1';
     HH1 = HH1 / norm(HH1,'fro');
     HH{i} = HH1 + 1e-6 * eye(size(HH1));
-%       HH{i} = HH1;
 end
 
 

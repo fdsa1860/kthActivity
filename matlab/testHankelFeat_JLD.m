@@ -3,6 +3,8 @@
 
 % function testHankelFeat
 clear;clc;close all;
+addpath('../mex');
+addpath(genpath('../3rdParty'));
 
 params.num_km_init_word = 1;
 params.MaxInteration = 100;
@@ -10,14 +12,15 @@ params.labelBatchSize = 10000;
 params.actualFilterThreshold = -1;
 params.find_labels_mode = 'DF';
 params.nc = 8;
-params.num_clusterNum = 300;
-% params.num_clusterNum = 100;
+params.metric = 'JLD';
+% params.num_clusterNum = 300;
+params.num_clusterNum = 100;
 % svm regularization
 C = 10;
 G = 0.015;
 
-addpath(genpath('../3rdParty/hankelet-master/hankelet-master'));
-addpath(genpath(getProjectBaseFolder));
+% addpath(genpath('../3rdParty/hankelet-master/hankelet-master'));
+% addpath(genpath(getProjectBaseFolder));
 
 % Load data
 file = 'seq_action01_06_person01_26_scene01_04_20131118t.mat';
@@ -37,18 +40,25 @@ load(fullfile('../expData',file));
 
 % X = ofs(:,2:end)';
 T = trajs(:,2:end)';
+T = denoise(T,0);
+save('T_hstln_20150412','T');
+% V = trajs(:,2:end)';
 % % % X = trajs2(:,2:end)';clear trajs2;
 al = reshape(al,1,[]);
 pl = reshape(pl,1,[]);
 sl = reshape(sl,1,[]);
 
-% average filtering and get velocity
-h = [1; 1; 1]/3;
-Tx = T(1:2:end,:); Tx = conv2(Tx, h, 'valid'); Vx = diff(Tx);
-Ty = T(2:2:end,:); Ty = conv2(Ty, h, 'valid'); Vy = diff(Ty);
+% % average filtering and get velocity
+Tx = T(1:2:end,:); 
+Ty = T(2:2:end,:); 
+% h = [1; 1; 1; 1; 1]/5;Tx = conv2(Tx,h,'valid');Ty = conv2(Ty,h,'valid');
+Vx = diff(Tx); Vy = diff(Ty);
 V = zeros(size(Vx,1)*2,size(Vx,2)); V(1:2:end,:) = Vx; V(2:2:end,:) = Vy;
+% Vx = V(1:2:end,:);
+% Vy = V(2:2:end,:);
 Vnorm = sum(sqrt(Vx.^2+Vy.^2));
 X = bsxfun(@rdivide,V,Vnorm);
+clear trajs V Vx Vy Vnorm;
 
 % % subtract mean
 % xm = mean(X(1:2:end,:));
@@ -82,27 +92,33 @@ s_test = sl(:,ismember(pl,testingSet));
 p_test = pl(:,ismember(pl,testingSet));
 
 
-% % kmeans to learn cluster centers
-% rng(0); % sample
-% rndInd = randi(size(X_train,2),1,params.labelBatchSize);
-% trainCenter = cell(1, params.num_km_init_word);
-% for i = 1 : params.num_km_init_word
-%     
-%     [~, trainCenter{i}, trainClusterNum] = litekmeans_JLD(X_train(:,rndInd), params.num_clusterNum,params);
+%% learn cluster centers
+rng(0); % sample
+rndInd = randi(size(X_train,2),1,params.labelBatchSize);
+trainCenter = cell(1, params.num_km_init_word);
+for i = 1 : params.num_km_init_word
+    
+%     [label, trainCenter{i}, trainClusterNum] = litekmeans_JLD(X_train(:,rndInd), params.num_clusterNum, params);
+%     [label, trainCenter{i}] = liteEMgamma_JLD(X_train(:,rndInd), params.num_clusterNum, params);
+%     load ../expData/sD_w10000_nc8_HHt_JLD_20150411
+    [label, trainCenter{i}, sD] = liteNcut_JLD(X_train(:,rndInd), params.num_clusterNum, params);
 %     params.trainClusterInfo{i}.num = trainClusterNum;
-%     
+    params.label = label;
+    params.rndInd = rndInd;
+    
 %     params.trainClusterNum{i} = size(trainCenter{i}, 2);
-%     
-% end
+    
+end
 
 % % labeling
 % params = cal_cluster_info(params);
 
-% save kmeansWords300_action01_06_person01_26_scene01_04_20131118t params trainCenter;
-% load ../expData/kmeansWords300_action01_06_person01_26_scene010304_20140220t_nomirror;
-load ../expData/kmeansJLD_w300_action01_06_person01_26_scene01_04_20150402v;
+save ncutJLD_w100_action01_06_person01_26_scene01_04_hstln_20150412v params trainCenter;
+% load ../expData/kmeansJLD_w300_action01_06_person01_26_scene01_04_20150403f;
+% load ../expData/kmeansJLD_w300_action01_06_person01_26_scene01_04_20150402v;
+% load ../expData/ncutJLD_w100_f5_action01_06_person01_26_scene01_04_20150411v;
 
-% get hankelet features
+%% get hankelet features
 hFeat = [];
 hsl = [];
 hal = [];
@@ -124,9 +140,10 @@ for i=1:length(usl)
         fprintf('action %d/%d processed.\n',j,length(ual));
     end    
 end
-%     save hFeat300_action01_06_person01_26_scene01_04_20131118t hFeat hsl hal hpl;
+save hFeatJLD_w100_action01_06_person01_26_scene01_04_HHt_20150412v hFeat hsl hal hpl;
 % load ../expData/hFeat300_action01_06_person01_26_scene01_04_20131210t;
-load ../expData/hFeatJLD_w300_train10000_action01_06_person01_26_scene01_04_20150401v;
+% load ../expData/hFeatJLD_w300_train10000_action01_06_person01_26_scene01_04_20150401v;
+% load ../expData/hFeatJLD_w300_action01_06_person01_26_scene01_04_HHt_20150404f;
 
 X2_train = hFeat(:,ismember(hpl,trainingSet));
 X2_validate = hFeat(:,ismember(hpl,validationSet));
@@ -148,41 +165,59 @@ y2_test = hal(:,ismember(hpl,testingSet));
 % sum_X2_test = sum(X2_test,1);
 % X2_test = X2_test./bsxfun(@times,sum_X2_test,ones(size(X2_test,1),1));
 
-% %% train a SVM problem
-% addpath(genpath('/home/xikang/research/code/groupActivity/3rdParty/libsvm-3.17'));
-% Cind = -10:10;
-% G = 10.^Cind;
-% C = 2.^Cind;
-% % C = 512;
+%% train a SVM problem
+
+% % scale data
+% mx = max(X2_train,[],2); mn = min(X2_train,[],2);
+% X2_train = bsxfun(@rdivide,bsxfun(@minus,X2_train,(0.5*mx+0.5*mn)),0.5*mx-0.5*mn);
+% mx = max(X2_validate,[],2); mn = min(X2_validate,[],2);
+% X2_validate = bsxfun(@rdivide,bsxfun(@minus,X2_validate,(0.5*mx+0.5*mn)),0.5*mx-0.5*mn);
+% mx = max(X2_test,[],2); mn = min(X2_test,[],2);
+% X2_test = bsxfun(@rdivide,bsxfun(@minus,X2_test,(0.5*mx+0.5*mn)),0.5*mx-0.5*mn);
+% 
+% X2_train = X2_train(1:100,:);
+% X2_validate = X2_validate(1:100,:);
+% X2_test = X2_test(1:100,:);
+
+addpath(genpath('../3rdParty/libsvm-3.18'));
+Cind = -10:10;
+G = 10.^Cind;
+C = 2.^Cind;
+% C = 512;
+gi = 4; ci = 17;
 % accuracyMat = zeros(length(G),length(C));
 % for gi = 1:length(G)
 % for ci = 1:length(C)
-%     ly = unique(y2_train);
-%     svmModel = cell(1,length(ly));
-%     accuracy = zeros(1,length(ly));
-%     for i=1:length(ly)
-%         y_train2 = y2_train;
-%         y_train2(y2_train==ly(i)) = 1;
-%         y_train2(y2_train~=ly(i)) = -1;
-%         y_validate2 = y2_validate;
-%         y_validate2(y2_validate==ly(i)) = 1;
-%         y_validate2(y2_validate~=ly(i)) = -1;
-%         y_test2 = y2_test;
-%         y_test2(y2_test==ly(i))=1;
-%         y_test2(y2_test~=ly(i))=-1;
-%         model = svmtrain(y_train2',X2_train',sprintf('-s 0 -t 2 -c %d -g %d',C(ci),G(gi)));
+    ly = unique(y2_train);
+    svmModel = cell(1,length(ly));
+    errInd = cell(1, length(ly));
+    accuracy = zeros(1,length(ly));
+    for i=1:length(ly)
+        y_train2 = y2_train;
+        y_train2(y2_train==ly(i)) = 1;
+        y_train2(y2_train~=ly(i)) = -1;
+        y_validate2 = y2_validate;
+        y_validate2(y2_validate==ly(i)) = 1;
+        y_validate2(y2_validate~=ly(i)) = -1;
+        y_test2 = y2_test;
+        y_test2(y2_test==ly(i))=1;
+        y_test2(y2_test~=ly(i))=-1;
+        model = svmtrain(y_train2',X2_train',sprintf('-s 0 -t 2 -c %d -g %d -w1 5 -w-1 1',C(ci),G(gi)));
 %         [predict_label, ~, prob_estimates] = svmpredict(y_validate2', X2_validate', model);
 %         accuracy(i) = nnz(predict_label==y_validate2')/length(y_validate2);
-% %         [predict_label, ~, prob_estimates] = svmpredict(y2_test', X2_test', model);
-% %         accuracy(i) = nnz(predict_label==y_test2')/length(y_test2);
-%         svmModel{i} = model;
-%     end
-%     % accuracy
-%     fprintf('\naccuracy is %f\n',mean(accuracy));
-%     accuracyMat(ci,gi) = mean(accuracy);
+        [predict_label, ~, prob_estimates] = svmpredict(y2_test', X2_test', model);
+        accuracy(i) = nnz(predict_label==y_test2')/length(y_test2);
+        errInd{i} = find(predict_label~=y_test2');
+%         [predict_label, ~, prob_estimates] = svmpredict(y_train2', X2_train', model);
+%         accuracy(i) = nnz(predict_label==y_train2')/length(y_train2);
+        svmModel{i} = model;
+    end
+    % accuracy
+    fprintf('\naccuracy is %f\n',mean(accuracy));
+%     accuracyMat(gi,ci) = mean(accuracy);
 % end
 % end
-% rmpath(genpath('/home/xikang/research/code/groupActivity/3rdParty/libsvm-3.17'));
+rmpath(genpath('../3rdParty/libsvm-3.18'));
 
 % %% train a SVM problem using one versus all, liblinear
 % Cind = -1:10;
