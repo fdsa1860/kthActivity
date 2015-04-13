@@ -12,7 +12,7 @@ if ~isSymmetric
     for i = 1:m
         for j = 1:n
             if strcmp(metric,'JLD')
-                D(i,j) = log(det((HH1{i}+1e-6*eye(16)+HH2{j})/2)) - 0.5*log(det(HH1{i}+1e-6*eye(16))) -0.5*log(det(HH2{j}));
+                D(i,j) = log(det((HH1{i}+2e-6*eye(size(HH1{i}))+HH2{j})/2)) - 0.5*log(det(HH1{i}+1e-6*eye(size(HH1{i})))) -0.5*log(det(HH2{j}+1e-6*eye(size(HH1{i}))));
             elseif strcmp(metric,'binlong')
                 D(i,j) = 2 - norm(HH1{i}+HH2{j},'fro');
             end

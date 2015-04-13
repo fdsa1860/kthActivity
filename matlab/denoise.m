@@ -1,21 +1,24 @@
-function y = denoise(trajs, order)
+function Tout = denoise(T,verbose)
 
-addpath('../3rdParty/hstln');
+xm = mean(T(1:2:end,:));
+ym = mean(T(2:2:end,:));
+Tm = kron(ones(size(T,1)/2,1),[xm;ym]);
+T = T - Tm;
 
-y = zeros(size(trajs));
-y(:,1) = trajs(:,1);
-for i=1:size(trajs,1);
+Tout = zeros(size(T));
+N = size(T,2);
+for i=1:N
 % for i=1:100
-    xy = reshape(trajs(i,2:end),2,[]);
-    mn = mean(xy,2);
-    mnMat = bsxfun(@times,mn,ones(1,size(xy,2)));
-    xy = xy - mnMat;
-    xy_smooth = hstln_mo(xy,order);
-    xy_smooth = xy_smooth + mnMat;
-    y(i,2:end) = reshape(xy_smooth,1,[]);
-    fprintf('hstln %d/%d traj processed.\n',i,size(trajs,1));
+    u = reshape(T(:,i),2,[]);
+    [u_hat,eta,r,R] = incremental_hstln_mo(u,0.2*norm(u));
+    Tout(:,i)  = u_hat(:);
+    fprintf('hstln %d/%d traj processed.\n',i,N);
+    if verbose
+        plot(u(1,:),u(2,:),'b.-');hold on;plot(u_hat(1,:),u_hat(2,:),'go-');hold off;
+        pause;
+    end
 end
 
-rmpath('/home/xikang/research/code/groupActivity/3rdParty/hstln');
+Tout = Tout + Tm;
 
 end

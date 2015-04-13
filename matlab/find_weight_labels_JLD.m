@@ -2,25 +2,25 @@ function [label, dis, histX] = find_weight_labels_JLD(HH_center,T,params)
 % compute the distance for testing data samples to the trained cluster
 % centers
 % Input:
-% center:       cluster center samples
-% X:            Testing samples
+% HH_center:    cluster center samples
+% T:            Testing samples
 % params:       container for supporting information for previous functions
 % Output:
-% labels:       label for each testing samples
+% label:        label for each testing samples
 % dis:          distance to cluster centers according to each data sample
 % histX:        histogram of X for different cluster centers (histogram for
 
-nc = params.nc;
-
 N = size(T,2);
 d = size(T,1);
+nc = params.nc;
+nr = (d/2-nc+1)*2;
 assert(mod(d,2)==0);
 HH = cell(1,N);
 for i = 1:N
-    H1 = hankel_mo(reshape(T(:,i),2,[]),[(d/2-nc+1)*2, nc]);
-    H1_p = H1 / (norm(H1*H1','fro')^0.5);
-    HH1 = H1_p * H1_p';
-    HH{i} = HH1 + 1e-6 * eye((d/2-nc+1)*2);
+    H1 = hankel_mo(reshape(T(:,i),2,[]),[nr, nc]);
+    HH1 = H1 * H1';
+    HH1 = HH1 / norm(HH1,'fro');
+    HH{i} = HH1 + 1e-6 * eye(size(HH1));
 %       HH{i} = HH1;
 end
 

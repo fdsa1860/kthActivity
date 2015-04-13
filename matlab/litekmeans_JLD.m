@@ -58,6 +58,7 @@ end
 nEachCluster = histc(label, 1 : k);
 [nEachCluster, IX] = sort(nEachCluster, 'descend');
 HH_center = HH_center(IX);
+label = sortLabel(label);
 
 end
 

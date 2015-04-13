@@ -2,20 +2,21 @@
 
 clear;
 %% load data
-file = 'seq_action01_06_person01_26_scene01_04_20131118f.mat';
+file = 'seq_action01_06_person01_26_scene01_04_20131118t.mat';
 load(fullfile('../expData',file));
-V = trajs(:,2:end)';
+T = trajs(:,2:end)';
+% V = trajs(:,2:end)';
 al = reshape(al,1,[]);
 pl = reshape(pl,1,[]);
 sl = reshape(sl,1,[]);
 
 % average filtering and get velocity
-% h = [1; 1; 1]/3;
-% Tx = T(1:2:end,:); Tx = conv2(Tx, h, 'valid'); Vx = diff(Tx);
-% Ty = T(2:2:end,:); Ty = conv2(Ty, h, 'valid'); Vy = diff(Ty);
-% V = zeros(size(Vx,1)*2,size(Vx,2)); V(1:2:end,:) = Vx; V(2:2:end,:) = Vy;
-Vx = V(1:2:end,:);
-Vy = V(2:2:end,:);
+h = [1; 1; 1; 1; 1]/5;
+Tx = T(1:2:end,:); Tx = conv2(Tx, h, 'valid'); Vx = diff(Tx);
+Ty = T(2:2:end,:); Ty = conv2(Ty, h, 'valid'); Vy = diff(Ty);
+V = zeros(size(Vx,1)*2,size(Vx,2)); V(1:2:end,:) = Vx; V(2:2:end,:) = Vy;
+% Vx = V(1:2:end,:);
+% Vy = V(2:2:end,:);
 Vnorm = sum(sqrt(Vx.^2+Vy.^2));
 X = bsxfun(@rdivide,V,Vnorm);
 
@@ -38,8 +39,9 @@ p_test = pl(:,ismember(pl,testingSet));
 
 %% load centers
 % load kmeansWords300_action01_06_person01_26_scene01_04_histDist_20150402f;
-load ../expData/kmeansBinlong_w300_action01_06_person01_26_scene01_04_20150403f;
+% load ../expData/kmeansBinlong_w300_action01_06_person01_26_scene01_04_20150403f;
 % load kmeansJLD_w300_action01_06_person01_26_scene01_04_20150403f;
+load ../expData/ncutJLD_w100_f5_action01_06_person01_26_scene01_04_20150411v;
 
 label = sortLabel(params.label);
 ind = params.rndInd;
@@ -53,8 +55,8 @@ n = size(trainData,2);
 d = size(trainData,1);
 k = length(centers);
 
-opt.metric = 'binlong';
-% opt.metric = 'JLD';
+% opt.metric = 'binlong';
+opt.metric = 'JLD';
 nc = 8;
 nr = (d/2-nc+1)*2;
 HH_train = cell(1,n);
@@ -106,36 +108,36 @@ end
 % end
 % toc
 
-% tic
-% D2 = zeros(k,n);
-% for i = 1:n
-%     for j = 1:k
-%         if strcmp(opt.metric,'JLD')
-%             HH1 = HH_train{i};
-%             HH2 = HH_centers{j};
-%             D2(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) -0.5*log(det(HH2));
-%         elseif strcmp(opt.metric,'binlong')
-%             D2(j,i) = 2 - norm(HH_train{i}+HH_centers{j},'fro');
-%         end
-%     end
-% end
-% toc
+tic
+D2 = zeros(k,n);
+for i = 1:n
+    for j = 1:k
+        if strcmp(opt.metric,'JLD')
+            HH1 = HH_train{i};
+            HH2 = HH_centers{j};
+            D2(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) -0.5*log(det(HH2));
+        elseif strcmp(opt.metric,'binlong')
+            D2(j,i) = 2 - norm(HH_train{i}+HH_centers{j},'fro');
+        end
+    end
+end
+toc
 
-% tic
-% D3 = zeros(k,k);
-% for i = 1:k
-%     for j = i:k
-%         if strcmp(opt.metric,'JLD')
-%             HH1 = HH_centers{i};
-%             HH2 = HH_centers{j};
-%             D3(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) -0.5*log(det(HH2));
-%         elseif strcmp(opt.metric,'binlong')
-%             D3(j,i) = 2 - norm(HH_centers{i}+HH_centers{j},'fro');
-%         end
-%     end
-% end
-% D3 = D3 + D3';
-% toc
+tic
+D3 = zeros(k,k);
+for i = 1:k
+    for j = i:k
+        if strcmp(opt.metric,'JLD')
+            HH1 = HH_centers{i};
+            HH2 = HH_centers{j};
+            D3(j,i) = log(det((HH1+HH2)/2)) - 0.5*log(det(HH1)) -0.5*log(det(HH2));
+        elseif strcmp(opt.metric,'binlong')
+            D3(j,i) = 2 - norm(HH_centers{i}+HH_centers{j},'fro');
+        end
+    end
+end
+D3 = D3 + D3';
+toc
 
 label1 = label;
 HH_centers1 = HH_centers;
@@ -158,24 +160,24 @@ toc
 
 %% plot
 c1 = 1;
-c2 = 5;
+c2 = 2;
 ind1 = find(label==c1);
 ind2 = find(label==c2);
 scale = 0:1:100;
-M = D;
-% M = D/0.1;
-A1 = M(ind1,ind1);
-A2 = M(ind2,ind2);
-A12 = M(ind1,ind2);
-h1 = hist(A1(:),scale);
-h2 = hist(A2(:),scale);
-h12 = hist(A12(:),scale);
-figure(1);
-plot(scale,h1,'b');
-hold on;
-plot(scale,h2,'g');
-plot(scale,h12,'r');
-hold off;
+% M = D;
+% % M = D/0.1;
+% A1 = M(ind1,ind1);
+% A2 = M(ind2,ind2);
+% A12 = M(ind1,ind2);
+% h1 = hist(A1(:),scale);
+% h2 = hist(A2(:),scale);
+% h12 = hist(A12(:),scale);
+% figure(1);
+% plot(scale,h1,'b');
+% hold on;
+% plot(scale,h2,'g');
+% plot(scale,h12,'r');
+% hold off;
 
 M = D2;
 B1 = M(c1,ind1);
@@ -195,7 +197,7 @@ plot(scale,g21,'m');
 hold off;
 xlabel('distance');
 ylabel('histogram');
-legend('all_1 to center_1','all_2 to center_2','all_1 to center_2','all_2 to center_1');
+legend('all_1 to center_1','all_2 to center_2','all_2 to center_1','all_1 to center_2');
 
 %% plot all inClusters
 scale = 0:0.01:1;
@@ -214,7 +216,7 @@ xlabel('distance');
 ylabel('histogram');
 
 %% distances between means
-imagesc(log(D6));colorbar;
+imagesc(D3(1:250,1:250));colorbar;
 set(gca,'xtick',[1:30:300 300],'xTickLabel',{'1 (231)','31 (95)','61 (76)','91 (58)','121 (3)','151 (2)','181 (1)','211 (1)','241 (1)','271 (1)','300 (1)'});
 set(gca,'ytick',[1:30:300 300],'yTickLabel',{'1 (421)','31 (88)','61 (45)','91 (32)','121 (22)','151 (13)','181 (10)','211 (7)','241 (5)','271 (3)','300 (1)'});
 xlabel('JBLD cluster means: index (cluster size)');
