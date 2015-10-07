@@ -40,8 +40,9 @@ load(fullfile('../expData',file));
 
 % X = ofs(:,2:end)';
 T = trajs(:,2:end)';
-T = denoise(T,0);
-save('T_hstln_20150412','T');
+% T = denoise(T,0);
+% save('T10000_hstln_20150414','T');
+% load('T_hstln_20150413','T');
 % V = trajs(:,2:end)';
 % % % X = trajs2(:,2:end)';clear trajs2;
 al = reshape(al,1,[]);
@@ -51,13 +52,14 @@ sl = reshape(sl,1,[]);
 % % average filtering and get velocity
 Tx = T(1:2:end,:); 
 Ty = T(2:2:end,:); 
-% h = [1; 1; 1; 1; 1]/5;Tx = conv2(Tx,h,'valid');Ty = conv2(Ty,h,'valid');
+% h = [1; 1; 1]/3;Tx = conv2(Tx,h,'valid');Ty = conv2(Ty,h,'valid');
 Vx = diff(Tx); Vy = diff(Ty);
 V = zeros(size(Vx,1)*2,size(Vx,2)); V(1:2:end,:) = Vx; V(2:2:end,:) = Vy;
 % Vx = V(1:2:end,:);
 % Vy = V(2:2:end,:);
-Vnorm = sum(sqrt(Vx.^2+Vy.^2));
-X = bsxfun(@rdivide,V,Vnorm);
+% Vnorm = sum(sqrt(Vx.^2+Vy.^2));
+% X = bsxfun(@rdivide,V,Vnorm);
+X = V;
 clear trajs V Vx Vy Vnorm;
 
 % % subtract mean
@@ -93,30 +95,30 @@ p_test = pl(:,ismember(pl,testingSet));
 
 
 %% learn cluster centers
-rng(0); % sample
-rndInd = randi(size(X_train,2),1,params.labelBatchSize);
-trainCenter = cell(1, params.num_km_init_word);
-for i = 1 : params.num_km_init_word
-    
-%     [label, trainCenter{i}, trainClusterNum] = litekmeans_JLD(X_train(:,rndInd), params.num_clusterNum, params);
-%     [label, trainCenter{i}] = liteEMgamma_JLD(X_train(:,rndInd), params.num_clusterNum, params);
-%     load ../expData/sD_w10000_nc8_HHt_JLD_20150411
-    [label, trainCenter{i}, sD] = liteNcut_JLD(X_train(:,rndInd), params.num_clusterNum, params);
-%     params.trainClusterInfo{i}.num = trainClusterNum;
-    params.label = label;
-    params.rndInd = rndInd;
-    
-%     params.trainClusterNum{i} = size(trainCenter{i}, 2);
-    
-end
+% rng(0); % sample
+% rndInd = randi(size(X_train,2),1,params.labelBatchSize);
+% trainCenter = cell(1, params.num_km_init_word);
+% for i = 1 : params.num_km_init_word
+%     
+% %     [label, trainCenter{i}, trainClusterNum] = litekmeans_JLD(X_train(:,rndInd), params.num_clusterNum, params);
+% %     [label, trainCenter{i}] = liteEMgamma_JLD(X_train(:,rndInd), params.num_clusterNum, params);
+% %     load ../expData/sD_w10000_nc8_HHt_JLD_20150411
+%     [label, trainCenter{i}, sD] = liteNcut_JLD(X_train(:,rndInd), params.num_clusterNum, params);
+% %     params.trainClusterInfo{i}.num = trainClusterNum;
+%     params.label = label;
+%     params.rndInd = rndInd;
+%     
+% %     params.trainClusterNum{i} = size(trainCenter{i}, 2);
+%     
+% end
 
 % % labeling
 % params = cal_cluster_info(params);
 
-save ncutJLD_w100_action01_06_person01_26_scene01_04_hstln_20150412v params trainCenter;
+% save ncutJLD_w100_action01_06_person01_26_scene01_04_hstln_20150412v params trainCenter;
 % load ../expData/kmeansJLD_w300_action01_06_person01_26_scene01_04_20150403f;
 % load ../expData/kmeansJLD_w300_action01_06_person01_26_scene01_04_20150402v;
-% load ../expData/ncutJLD_w100_f5_action01_06_person01_26_scene01_04_20150411v;
+load ../expData/ncutJLD_w100_action01_06_person01_26_scene01_04_hstln_20150414v;
 
 %% get hankelet features
 hFeat = [];
@@ -140,7 +142,7 @@ for i=1:length(usl)
         fprintf('action %d/%d processed.\n',j,length(ual));
     end    
 end
-save hFeatJLD_w100_action01_06_person01_26_scene01_04_HHt_20150412v hFeat hsl hal hpl;
+save hFeatJLD_w100_action01_06_person01_26_scene01_04_hstln_HHt_20150414v hFeat hsl hal hpl;
 % load ../expData/hFeat300_action01_06_person01_26_scene01_04_20131210t;
 % load ../expData/hFeatJLD_w300_train10000_action01_06_person01_26_scene01_04_20150401v;
 % load ../expData/hFeatJLD_w300_action01_06_person01_26_scene01_04_HHt_20150404f;

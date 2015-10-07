@@ -7,8 +7,9 @@ T = T - Tm;
 
 Tout = zeros(size(T));
 N = size(T,2);
-for i=1:N
-% for i=1:100
+load ind;
+% for i=1:N
+for i=ind
     u = reshape(T(:,i),2,[]);
     [u_hat,eta,r,R] = incremental_hstln_mo(u,0.2*norm(u));
     Tout(:,i)  = u_hat(:);
