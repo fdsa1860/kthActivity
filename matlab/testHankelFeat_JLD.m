@@ -19,6 +19,15 @@ params.num_clusterNum = 100;
 C = 10;
 G = 0.015;
 
+opt.metric = 'JLD';
+% opt.metric = 'JLD_denoise';
+% opt.metric = 'binlong';
+% opt.metric = 'AIRM';
+opt.H_structure = 'HHt';
+opt.sigma = 0.01;
+% opt.sigma = 0.25; % MSR parameter
+opt.epsilon = 1;
+
 % addpath(genpath('../3rdParty/hankelet-master/hankelet-master'));
 % addpath(genpath(getProjectBaseFolder));
 
@@ -100,10 +109,12 @@ p_test = pl(:,ismember(pl,testingSet));
 % trainCenter = cell(1, params.num_km_init_word);
 % for i = 1 : params.num_km_init_word
 %     
+%     HH_tr = getHH(X_train(:,rndInd), opt);
+%     [label,trainCenter{i},sD] = kmeansJLD(HH_tr,params.num_clusterNum,opt);
 % %     [label, trainCenter{i}, trainClusterNum] = litekmeans_JLD(X_train(:,rndInd), params.num_clusterNum, params);
 % %     [label, trainCenter{i}] = liteEMgamma_JLD(X_train(:,rndInd), params.num_clusterNum, params);
 % %     load ../expData/sD_w10000_nc8_HHt_JLD_20150411
-%     [label, trainCenter{i}, sD] = liteNcut_JLD(X_train(:,rndInd), params.num_clusterNum, params);
+% %     [label, trainCenter{i}, sD] = liteNcut_JLD(X_train(:,rndInd), params.num_clusterNum, params);
 % %     params.trainClusterInfo{i}.num = trainClusterNum;
 %     params.label = label;
 %     params.rndInd = rndInd;
@@ -115,10 +126,10 @@ p_test = pl(:,ismember(pl,testingSet));
 % % labeling
 % params = cal_cluster_info(params);
 
-% save ncutJLD_w100_action01_06_person01_26_scene01_04_hstln_20150412v params trainCenter;
+% save kmeanJLD_w100_action01_06_person01_26_scene01_04_20151019v params opt trainCenter;
 % load ../expData/kmeansJLD_w300_action01_06_person01_26_scene01_04_20150403f;
 % load ../expData/kmeansJLD_w300_action01_06_person01_26_scene01_04_20150402v;
-load ../expData/ncutJLD_w100_action01_06_person01_26_scene01_04_hstln_20150414v;
+load ../expData/kmeanJLD_w100_action01_06_person01_26_scene01_04_20151019v;
 
 %% get hankelet features
 hFeat = [];
@@ -132,9 +143,12 @@ for i=1:length(usl)
         upl = unique(pl(sl==usl(i) & al==ual(j)));
         for k=1:length(upl)            
             X_tmp = X(:,sl==usl(i) & al==ual(j) & pl==upl(k));
-            [label1, dis, class_hist] = find_weight_labels_JLD(trainCenter{1}, X_tmp, params);
+%             [label1, dis, class_hist] = find_weight_labels_JLD(trainCenter{1}, X_tmp, params);
+            HH_tmp = getHH(X_tmp, opt);
+            vFeat = vladFeature(trainCenter{1}, HH_tmp, ones(length(HH_tmp),1), opt);
 %             class_hist2 = getVotedHist(label1,dis,params);
-            hFeat = [hFeat, class_hist'];
+%             hFeat = [hFeat, class_hist'];
+            hFeat = [hFeat, vFeat];
             hsl = [hsl, usl(i)];
             hal = [hal, ual(j)];
             hpl = [hpl, upl(k)];            
@@ -142,6 +156,7 @@ for i=1:length(usl)
         fprintf('action %d/%d processed.\n',j,length(ual));
     end    
 end
+
 save hFeatJLD_w100_action01_06_person01_26_scene01_04_hstln_HHt_20150414v hFeat hsl hal hpl;
 % load ../expData/hFeat300_action01_06_person01_26_scene01_04_20131210t;
 % load ../expData/hFeatJLD_w300_train10000_action01_06_person01_26_scene01_04_20150401v;

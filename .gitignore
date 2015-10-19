@@ -1,6 +1,9 @@
 .DS_Store
 *~
+*.mat
 *.avi
+*.out
+*.mex*
 expData/
 .build_release/
 .build_debug/
